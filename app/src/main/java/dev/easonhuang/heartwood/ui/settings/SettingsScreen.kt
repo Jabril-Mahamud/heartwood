@@ -336,7 +336,12 @@ private fun DayColorDialog(day: DayOfWeek, current: Color, onPick: (Color?) -> U
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.settings_day_color, day.fullName())) },
         text = {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // 4 per row keeps 12 swatches an even grid at the 48dp touch-target size.
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                maxItemsInEachRow = 4,
+            ) {
                 swatches.forEachIndexed { i, swatch ->
                     val selected = swatch.toArgb() == current.toArgb()
                     val label = stringResource(R.string.settings_color_swatch, i + 1, swatches.size)
