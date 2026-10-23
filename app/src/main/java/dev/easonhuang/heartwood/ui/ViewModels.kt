@@ -6,10 +6,12 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import dev.easonhuang.heartwood.data.DashboardLayout
 import dev.easonhuang.heartwood.data.DashboardPreferences
+import dev.easonhuang.heartwood.data.GoalsRepository
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricDetail
 import dev.easonhuang.heartwood.data.MetricSummary
+import dev.easonhuang.heartwood.data.WeekStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -22,16 +24,22 @@ import kotlinx.coroutines.launch
 class DashboardViewModel(
     private val manager: HealthConnectManager,
     private val prefs: DashboardPreferences,
+    goalsRepo: GoalsRepository,
 ) : ViewModel() {
     // All summaries as read from Health Connect, in catalog order (null until first load).
     private val _summaries = MutableStateFlow<List<MetricSummary>?>(null)
+
+    // Goals are joined here rather than at read time so editing one updates the cards live.
+    private val withGoals = combine(_summaries, goalsRepo.goals) { all, goals ->
+        all?.map { it.copy(goal = goals[it.metric]) }
+    }
 
     /**
      * Summaries arranged for display: reordered to match the user's layout and with hidden
      * cards dropped. Stays null until the first read so the screen can show its loading state.
      */
     val summaries: StateFlow<List<MetricSummary>?> =
-        combine(_summaries, prefs.layout) { all, layout ->
+        combine(withGoals, prefs.layout) { all, layout ->
             if (all == null) return@combine null
             val byMetric = all.associateBy { it.metric }
             layout.visible.mapNotNull { byMetric[it] }
@@ -39,8 +47,12 @@ class DashboardViewModel(
 
     /** Every summary keyed by metric, hidden ones included, for the dashboard's edit mode. */
     val allSummaries: StateFlow<Map<Metric, MetricSummary>?> =
-        _summaries.map { all -> all?.associateBy { it.metric } }
+        withGoals.map { all -> all?.associateBy { it.metric } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Week start and per-day colours for the week rings card. */
+    val weekStyle: StateFlow<WeekStyle> =
+        prefs.weekStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeekStyle.DEFAULT)
 
     /** The persisted card order and hidden set (null until DataStore's first read). */
     val layout: StateFlow<DashboardLayout?> =
@@ -64,8 +76,8 @@ class DashboardViewModel(
     }
 
     companion object {
-        fun factory(manager: HealthConnectManager, prefs: DashboardPreferences) = viewModelFactory {
-            initializer { DashboardViewModel(manager, prefs) }
+        fun factory(manager: HealthConnectManager, prefs: DashboardPreferences, goalsRepo: GoalsRepository) = viewModelFactory {
+            initializer { DashboardViewModel(manager, prefs, goalsRepo) }
         }
     }
 }

@@ -57,12 +57,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.easonhuang.heartwood.R
 import dev.easonhuang.heartwood.data.DashboardLayout
 import dev.easonhuang.heartwood.data.DashboardPreferences
+import dev.easonhuang.heartwood.data.GoalsRepository
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricSummary
 import dev.easonhuang.heartwood.data.title
 import dev.easonhuang.heartwood.ui.DashboardViewModel
 import dev.easonhuang.heartwood.ui.components.MetricCard
+import dev.easonhuang.heartwood.ui.components.WeekGoalCard
+import dev.easonhuang.heartwood.ui.components.stepGoal
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 
@@ -77,15 +80,17 @@ import sh.calvin.reorderable.rememberReorderableLazyGridState
 fun DashboardScreen(
     manager: HealthConnectManager,
     dashboardPrefs: DashboardPreferences,
+    goalsRepo: GoalsRepository,
     bottomInset: androidx.compose.ui.unit.Dp,
     onOpenMetric: (Metric) -> Unit,
     onManagePermissions: () -> Unit,
 ) {
-    val vm: DashboardViewModel = viewModel(factory = DashboardViewModel.factory(manager, dashboardPrefs))
+    val vm: DashboardViewModel = viewModel(factory = DashboardViewModel.factory(manager, dashboardPrefs, goalsRepo))
     val summaries by vm.summaries.collectAsStateWithLifecycle()
     val allSummaries by vm.allSummaries.collectAsStateWithLifecycle()
     val layout by vm.layout.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    val weekStyle by vm.weekStyle.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val haptics = LocalHapticFeedback.current
 
@@ -149,6 +154,15 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            // ponytail: outside the reorder/hide layout, so it's always first. Fold it into
+            // DashboardLayout if people want to move or hide it.
+            val steps = data.firstOrNull { it.metric == Metric.STEPS }
+            val stepGoal = steps?.stepGoal()
+            if (steps != null && stepGoal != null) {
+                item(key = "week", span = { GridItemSpan(maxLineSpan) }) {
+                    WeekGoalCard(steps, stepGoal, weekStyle, onClick = { onOpenMetric(Metric.STEPS) })
+                }
+            }
             items(data, key = { it.metric.key }) { summary ->
                 MetricCard(
                     summary = summary,

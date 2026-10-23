@@ -5,6 +5,8 @@
     <string name="widget_metric_name">Heartwood metric</string>
     <string name="widget_description">Glanceable health metrics from Health Connect.</string>
     <string name="metric_widget_description">A single health metric with a graph, pick which one.</string>
+    <string name="widget_week_name">Heartwood steps week</string>
+    <string name="week_widget_description">Your last seven days of steps against your goal.</string>
 
     <!-- Metric names -->
     <string name="metric_steps">Steps</string>
@@ -74,6 +76,18 @@
     <string name="dashboard_show">Show %1$s</string>
     <string name="dashboard_move_earlier">Move earlier</string>
     <string name="dashboard_move_later">Move later</string>
+    <!-- Under the "5/7" on the Today week rings -->
+    <string name="dashboard_week_goal_met">days goal met</string>
+    <!-- Week rings daily average so far, e.g. "avg 6,120/day" -->
+    <string name="dashboard_week_avg">avg %1$s/day</string>
+    <!-- Settings: week rings -->
+    <string name="settings_section_week">Week rings</string>
+    <string name="settings_week_start">Week starts on</string>
+    <!-- %1$s is a weekday, e.g. "Monday color" -->
+    <string name="settings_day_color">%1$s color</string>
+    <!-- TalkBack label for a color swatch, e.g. "Color 3 of 12" -->
+    <string name="settings_color_swatch">Color %1$d of %2$d</string>
+    <string name="settings_color_reset">Reset</string>
     <string name="card_locked">Locked</string>
     <string name="card_tap_to_grant">Tap to grant access</string>
 
@@ -91,6 +105,17 @@
     <string name="stat_daily_avg">Daily avg</string>
     <string name="stat_best_day">Best day</string>
     <string name="stat_14day_total">14-day total</string>
+    <string name="stat_week_avg">This week, daily avg</string>
+    <string name="stat_week_total">This week, total</string>
+    <string name="stat_month_avg">This month, daily avg</string>
+    <string name="stat_month_total">This month, total</string>
+    <string name="stat_year_avg">This year, daily avg</string>
+    <string name="stat_year_total">This year, total</string>
+    <!-- Estimates from this week's steps; "≈" marks them as rough -->
+    <string name="stat_week_distance">This week ≈ distance</string>
+    <string name="stat_week_calories">This week ≈ energy</string>
+    <string name="stat_week_time">This week ≈ walking time</string>
+    <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="stat_average">Average</string>
     <string name="stat_min">Min</string>
     <string name="stat_max">Max</string>

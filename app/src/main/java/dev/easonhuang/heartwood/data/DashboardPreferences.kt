@@ -1,12 +1,17 @@
 package dev.easonhuang.heartwood.data
 
 import android.content.Context
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.DayOfWeek
+import java.time.LocalDate
 
 private val Context.dashboardDataStore by preferencesDataStore(name = "heartwood_dashboard")
 
@@ -29,6 +34,31 @@ data class DashboardLayout(
 }
 
 /**
+ * Default ring colour per weekday (Monday first): hues evenly spaced around the colour wheel from
+ * red, at one saturation/lightness so no day dominates.
+ */
+val defaultWeekdayColors = List(7) { Color.hsl(hue = it * 360f / 7, saturation = 0.70f, lightness = 0.60f) }
+
+/** How the Today week rings are drawn: the day the week starts on and each weekday's colour. */
+data class WeekStyle(val start: DayOfWeek, val colors: List<Color>) {
+    fun color(day: DayOfWeek): Color = colors[day.value - 1]
+
+    companion object {
+        val DEFAULT = WeekStyle(DayOfWeek.MONDAY, defaultWeekdayColors)
+    }
+}
+
+/**
+ * The current calendar week's days so far, oldest first, cut from [daily] totals ending [today].
+ * Days after today aren't included, so on the first day of the week there's exactly one.
+ */
+fun weekSoFar(daily: List<Float>, start: DayOfWeek, today: LocalDate): List<Pair<LocalDate, Float>> {
+    val elapsed = (today.dayOfWeek.value - start.value + 7) % 7 + 1
+    val days = daily.takeLast(elapsed)
+    return days.mapIndexed { i, v -> today.minusDays((days.size - 1 - i).toLong()) to v }
+}
+
+/**
  * Persists [DashboardLayout] in DataStore. Order is stored as a comma-separated list of metric
  * keys and the hidden set as a string set of keys; both are reconciled against the current
  * [Metric] catalog on read so stale or missing keys can never corrupt the dashboard.
@@ -48,6 +78,29 @@ class DashboardPreferences(private val context: Context) {
         val order = (stored + Metric.entries.filter { it !in stored })
         val hidden = prefs[hiddenKey].orEmpty().mapNotNull { Metric.fromKey(it) }.toSet()
         DashboardLayout(order, hidden)
+    }
+
+    private val weekStartKey = intPreferencesKey("week_start")
+    private fun dayColorKey(day: DayOfWeek) = intPreferencesKey("day_color_${day.value}")
+
+    val weekStyle: Flow<WeekStyle> = context.dashboardDataStore.data.map { prefs ->
+        WeekStyle(
+            start = prefs[weekStartKey]?.let(DayOfWeek::of) ?: DayOfWeek.MONDAY,
+            colors = DayOfWeek.entries.map { day ->
+                prefs[dayColorKey(day)]?.let(::Color) ?: defaultWeekdayColors[day.value - 1]
+            },
+        )
+    }
+
+    suspend fun setWeekStart(day: DayOfWeek) {
+        context.dashboardDataStore.edit { prefs -> prefs[weekStartKey] = day.value }
+    }
+
+    /** Sets [day]'s ring colour, or back to the default when [color] is null. */
+    suspend fun setDayColor(day: DayOfWeek, color: Color?) {
+        context.dashboardDataStore.edit { prefs ->
+            if (color == null) prefs.remove(dayColorKey(day)) else prefs[dayColorKey(day)] = color.toArgb()
+        }
     }
 
     suspend fun save(order: List<Metric>, hidden: Set<Metric>) {

@@ -10,6 +10,7 @@ data class MetricSummary(
     val hasData: Boolean,
     val granted: Boolean,
     val spark: List<Float> = emptyList(),
+    val goal: Float? = null,    // daily target, if the metric supports one
 )
 
 /** A single charted data point. */

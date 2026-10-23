@@ -234,6 +234,7 @@ private fun MainNav(
                 DashboardScreen(
                     manager = manager,
                     dashboardPrefs = dashboardPrefs,
+                    goalsRepo = goalsRepo,
                     bottomInset = bottomInset,
                     onOpenMetric = { metric -> navController.navigate("detail/${metric.key}") },
                     onManagePermissions = onManagePermissions,
@@ -246,6 +247,7 @@ private fun MainNav(
                 SettingsScreen(
                     manager = manager,
                     exporter = exporter,
+                    dashboardPrefs = dashboardPrefs,
                     bottomInset = bottomInset,
                     onManagePermissions = onManagePermissions,
                 )

@@ -37,9 +37,12 @@ import java.time.LocalDateTime
 import java.time.Period
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.roundToInt
 import kotlin.reflect.KClass
+import kotlinx.coroutines.flow.first
 
 /**
  * Thin, read-only wrapper around Health Connect. Knows how to turn each [Metric] into a dashboard
@@ -222,7 +225,35 @@ class HealthConnectManager(
         val recent = points.takeLast(20).reversed().map {
             RecordRow(withUnit(metric.formatValue(it.value), metric), dayMonthTime(it.time))
         }
-        return MetricDetail(metric, headline, caption, points, stats, recent)
+        // Steps also get week/month/year figures and rough distance, energy and time equivalents.
+        val extra = if (metric == Metric.STEPS) runCatching { stepPeriodStats() }.getOrDefault(emptyList()) else emptyList()
+        return MetricDetail(metric, headline, caption, points, stats + extra, recent)
+    }
+
+    private suspend fun stepPeriodStats(): List<Pair<String, String>> {
+        val today = LocalDate.now()
+        val weekStart = weekStartOf(today, DashboardPreferences(context).weekStyle.first().start)
+        // Early January, the week can start last year, so read back to whichever comes first.
+        val from = minOf(weekStart, today.withDayOfYear(1))
+        val daily = dailyTotalSeries(Metric.STEPS, ChronoUnit.DAYS.between(from, today).toInt() + 1)
+            .map { it.time.atZone(zone).toLocalDate() to it.value }
+        if (daily.isEmpty()) return emptyList()
+        val week = periodTotals(daily, weekStart)
+        val month = periodTotals(daily, today.withDayOfMonth(1))
+        val year = periodTotals(daily, today.withDayOfYear(1))
+        val minutes = (week.total / STEPS_PER_MINUTE).roundToInt()
+        fun steps(v: Float) = withUnit(Metric.STEPS.formatValue(v), Metric.STEPS)
+        return listOf(
+            str(R.string.stat_week_avg) to steps(week.average),
+            str(R.string.stat_week_total) to steps(week.total),
+            str(R.string.stat_month_avg) to steps(month.average),
+            str(R.string.stat_month_total) to steps(month.total),
+            str(R.string.stat_year_avg) to steps(year.average),
+            str(R.string.stat_year_total) to steps(year.total),
+            str(R.string.stat_week_distance) to withUnit("%.1f".format(week.total * STRIDE_METERS / 1000f), Metric.DISTANCE),
+            str(R.string.stat_week_calories) to withUnit("%,.0f".format(week.total * KCAL_PER_STEP), Metric.ACTIVE_CALORIES),
+            str(R.string.stat_week_time) to str(R.string.duration_hours_minutes, minutes / 60, minutes % 60),
+        )
     }
 
     private suspend fun heartRateDetail(): MetricDetail {
