@@ -34,10 +34,11 @@ data class DashboardLayout(
 }
 
 /**
- * Default ring colour per weekday (Monday first): hues evenly spaced around the colour wheel from
- * red, at one saturation/lightness so no day dominates.
+ * Default ring color per weekday (Monday first), in rainbow order: red, orange, yellow, green, blue,
+ * indigo, violet. Every hue is a multiple of 30 so each default is also one of Settings' swatches.
  */
-val defaultWeekdayColors = List(7) { Color.hsl(hue = it * 360f / 7, saturation = 0.70f, lightness = 0.60f) }
+val defaultWeekdayColors = listOf(0f, 30f, 60f, 120f, 210f, 240f, 270f)
+    .map { Color.hsl(hue = it, saturation = 0.70f, lightness = 0.60f) }
 
 /** How the Today week rings are drawn: the day the week starts on and each weekday's colour. */
 data class WeekStyle(val start: DayOfWeek, val colors: List<Color>) {

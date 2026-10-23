@@ -288,8 +288,8 @@ private fun SettingRow(icon: ImageVector, title: String, subtitle: String, onCli
     }
 }
 
-// ponytail: 12 evenly spaced hues at the default rings' saturation/lightness. Any colour here
-// reads on both themes; a free-form picker would need contrast checks.
+// ponytail: 12 hues 30° apart at the default rings' saturation/lightness, so the defaults are in
+// here too. Any of them reads on both themes; a free-form picker would need contrast checks.
 private val swatches = List(12) { Color.hsl(hue = it * 30f, saturation = 0.70f, lightness = 0.60f) }
 
 @Composable
