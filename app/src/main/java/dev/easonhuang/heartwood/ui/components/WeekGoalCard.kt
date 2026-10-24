@@ -1,7 +1,6 @@
 package dev.easonhuang.heartwood.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,13 +33,12 @@ import dev.easonhuang.heartwood.data.WeekStyle
 import dev.easonhuang.heartwood.data.formatValue
 import dev.easonhuang.heartwood.data.title
 import dev.easonhuang.heartwood.data.weekSoFar
-import java.time.LocalDate
 import java.time.format.TextStyle
 
 /**
  * This calendar week's steps as nested goal rings: the first day of the week is the outer ring and
  * each day after sits one ring in, so a day keeps its ring all week. Days still to come aren't drawn.
- * [summary] must pass [stepGoal]; its spark is the daily totals ending today.
+ * [summary] must pass [stepGoal]; its spark is the daily totals ending [MetricSummary.asOf].
  */
 @Composable
 fun WeekGoalCard(
@@ -50,23 +48,25 @@ fun WeekGoalCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val week = weekSoFar(summary.spark, style.start, LocalDate.now())
+    // asOf, not now(): the spark is from the last refresh, which may have been before midnight.
+    val week = weekSoFar(summary.spark, style.start, summary.asOf)
     val days = week.map { it.second }
     val daysMet = days.count { it >= goal }
     val average = summary.metric.formatValue(days.average().toFloat())
-    val description = pluralStringResource(R.plurals.summary_chart_goal_met, days.size, summary.metric.title, daysMet, days.size)
+    val goalMet = pluralStringResource(R.plurals.summary_chart_goal_met, days.size, summary.metric.title, daysMet, days.size)
+    val description = "$goalMet, ${stringResource(R.string.dashboard_week_avg, average)}"
     val locale = LocalLocale.current.platformLocale
     val rings = week.map { (date, value) -> Triple(date, value, style.color(date.dayOfWeek)) }
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.extraLarge)
-            .clickable(onClick = onClick)
-            .clearAndSetSemantics { contentDescription = description },
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(20.dp).clearAndSetSemantics { contentDescription = description },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(contentAlignment = Alignment.Center) {
                 rings.forEachIndexed { i, (_, value, color) ->
                     GoalRing(progress = value / goal, color = color, diameter = (168 - 22 * i).dp, stroke = 8.dp)

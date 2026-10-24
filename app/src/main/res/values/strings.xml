@@ -6,7 +6,7 @@
     <string name="widget_description">Glanceable health metrics from Health Connect.</string>
     <string name="metric_widget_description">A single health metric with a graph, pick which one.</string>
     <string name="widget_week_name">Heartwood steps week</string>
-    <string name="week_widget_description">Your last seven days of steps against your goal.</string>
+    <string name="week_widget_description">This week\'s steps against your goal, as rings.</string>
 
     <!-- Metric names -->
     <string name="metric_steps">Steps</string>
@@ -82,6 +82,8 @@
     <string name="dashboard_week_avg">avg %1$s/day</string>
     <!-- Settings: week rings -->
     <string name="settings_section_week">Week rings</string>
+    <string name="settings_goal_rings">Show on Today</string>
+    <string name="settings_goal_rings_summary">Step goal ring on the steps card and this week\'s rings above the grid</string>
     <string name="settings_week_start">Week starts on</string>
     <!-- %1$s is a weekday, e.g. "Monday color" -->
     <string name="settings_day_color">%1$s color</string>

@@ -1,6 +1,7 @@
 package dev.easonhuang.heartwood.data
 
 import java.time.Instant
+import java.time.LocalDate
 
 /** One dashboard tile: the headline value for a metric plus a sparkline of recent points. */
 data class MetricSummary(
@@ -11,6 +12,7 @@ data class MetricSummary(
     val granted: Boolean,
     val spark: List<Float> = emptyList(),
     val goal: Float? = null,    // daily target, if the metric supports one
+    val asOf: LocalDate = LocalDate.now(),  // day the summary was read; spark's last point is this day
 )
 
 /** A single charted data point. */

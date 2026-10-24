@@ -30,6 +30,7 @@ import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -42,7 +43,6 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.roundToInt
 import kotlin.reflect.KClass
-import kotlinx.coroutines.flow.first
 
 /**
  * Thin, read-only wrapper around Health Connect. Knows how to turn each [Metric] into a dashboard
@@ -225,14 +225,17 @@ class HealthConnectManager(
         val recent = points.takeLast(20).reversed().map {
             RecordRow(withUnit(metric.formatValue(it.value), metric), dayMonthTime(it.time))
         }
-        // Steps also get week/month/year figures and rough distance, energy and time equivalents.
-        val extra = if (metric == Metric.STEPS) runCatching { stepPeriodStats() }.getOrDefault(emptyList()) else emptyList()
-        return MetricDetail(metric, headline, caption, points, stats + extra, recent)
+        return MetricDetail(metric, headline, caption, points, stats, recent)
     }
 
-    private suspend fun stepPeriodStats(): List<Pair<String, String>> {
+    /**
+     * Extra steps detail rows: week/month/year figures and rough distance, energy and time
+     * equivalents. Kept out of [readDetail] because it reads back to 1 January, which the widgets
+     * have no use for.
+     */
+    suspend fun readStepPeriodStats(firstDayOfWeek: DayOfWeek): List<Pair<String, String>> {
         val today = LocalDate.now()
-        val weekStart = weekStartOf(today, DashboardPreferences(context).weekStyle.first().start)
+        val weekStart = weekStartOf(today, firstDayOfWeek)
         // Early January, the week can start last year, so read back to whichever comes first.
         val from = minOf(weekStart, today.withDayOfYear(1))
         val daily = dailyTotalSeries(Metric.STEPS, ChronoUnit.DAYS.between(from, today).toInt() + 1)
@@ -250,8 +253,8 @@ class HealthConnectManager(
             str(R.string.stat_month_total) to steps(month.total),
             str(R.string.stat_year_avg) to steps(year.average),
             str(R.string.stat_year_total) to steps(year.total),
-            str(R.string.stat_week_distance) to withUnit("%.1f".format(week.total * STRIDE_METERS / 1000f), Metric.DISTANCE),
-            str(R.string.stat_week_calories) to withUnit("%,.0f".format(week.total * KCAL_PER_STEP), Metric.ACTIVE_CALORIES),
+            str(R.string.stat_week_distance) to withUnit(Metric.DISTANCE.formatValue(week.total * STRIDE_METERS / 1000f), Metric.DISTANCE),
+            str(R.string.stat_week_calories) to withUnit(Metric.ACTIVE_CALORIES.formatValue(week.total * KCAL_PER_STEP), Metric.ACTIVE_CALORIES),
             str(R.string.stat_week_time) to str(R.string.duration_hours_minutes, minutes / 60, minutes % 60),
         )
     }

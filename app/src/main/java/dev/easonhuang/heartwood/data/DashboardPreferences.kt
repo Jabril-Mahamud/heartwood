@@ -3,6 +3,7 @@ package dev.easonhuang.heartwood.data
 import android.content.Context
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -81,6 +82,7 @@ class DashboardPreferences(private val context: Context) {
         DashboardLayout(order, hidden)
     }
 
+    private val goalRingsKey = booleanPreferencesKey("goal_rings")
     private val weekStartKey = intPreferencesKey("week_start")
     private fun dayColorKey(day: DayOfWeek) = intPreferencesKey("day_color_${day.value}")
 
@@ -91,6 +93,13 @@ class DashboardPreferences(private val context: Context) {
                 prefs[dayColorKey(day)]?.let(::Color) ?: defaultWeekdayColors[day.value - 1]
             },
         )
+    }
+
+    /** Whether Today draws the step goal ring and week rings. Steps always has a goal, so this is the opt-out. */
+    val goalRings: Flow<Boolean> = context.dashboardDataStore.data.map { prefs -> prefs[goalRingsKey] ?: true }
+
+    suspend fun setGoalRings(show: Boolean) {
+        context.dashboardDataStore.edit { prefs -> prefs[goalRingsKey] = show }
     }
 
     suspend fun setWeekStart(day: DayOfWeek) {

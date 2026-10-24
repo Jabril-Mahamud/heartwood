@@ -35,7 +35,8 @@ read it all here.
   SpO₂, weight, blood pressure and more, each with a sparkline. Long-press to rearrange or
   hide cards right on the grid, keeping only what you track.
 - **Step goal rings**, today's steps in a ring against your goal, plus nested rings for each day
-  of the week so far with its daily average. Pick the week start and each day's color in Settings.
+  of the week so far with its daily average. Pick the week start and each day's color, or turn
+  them off, in Settings.
 - **Detail views**, full charts, statistics and recent records per metric.
 - **Weekly summary**, daily averages vs. goals you set, with progress rings, goal lines and
   week-over-week trends. Tap a bar to see that day's value.

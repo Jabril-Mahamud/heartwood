@@ -30,4 +30,10 @@ class WeekSoFarTest {
         val monday = LocalDate.of(2026, 10, 19)
         assertEquals(listOf(monday to 7f), weekSoFar(daily, DayOfWeek.MONDAY, monday))
     }
+
+    @Test
+    fun shortSeriesKeepsDatesEndingToday() {
+        val week = weekSoFar(listOf(1f, 2f, 3f), DayOfWeek.MONDAY, friday)
+        assertEquals(listOf(friday.minusDays(2), friday.minusDays(1), friday), week.map { it.first })
+    }
 }

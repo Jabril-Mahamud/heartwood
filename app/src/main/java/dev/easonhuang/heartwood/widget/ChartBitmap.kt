@@ -78,7 +78,8 @@ fun chartBitmap(
 
 /**
  * Nested goal rings for the week widget, same geometry as the in-app WeekGoalCard: [values] and
- * [colorsArgb] are oldest first, so index 0 (the week's first day) is the outer ring. Tracks are a faint tint of each ring.
+ * [colorsArgb] are oldest first, so index 0 (the week's first day) is the outer ring. Tracks are a
+ * faint tint of each ring.
  */
 fun weekRingsBitmap(values: List<Float>, goal: Float, colorsArgb: List<Int>, sizePx: Int): Bitmap {
     val size = sizePx.coerceAtLeast(1)

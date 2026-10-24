@@ -4,14 +4,14 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -40,6 +42,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -69,7 +72,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.background
 import dev.easonhuang.heartwood.BuildConfig
 import dev.easonhuang.heartwood.R
 import dev.easonhuang.heartwood.data.DashboardPreferences
@@ -101,6 +103,7 @@ fun SettingsScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     var showFormatDialog by remember { mutableStateOf(false) }
     val weekStyle by dashboardPrefs.weekStyle.collectAsStateWithLifecycle(WeekStyle.DEFAULT)
+    val goalRings by dashboardPrefs.goalRings.collectAsStateWithLifecycle(true)
     var pickingColorFor by remember { mutableStateOf<DayOfWeek?>(null) }
 
     // The week widget only re-reads prefs when it renders, so nudge it after every change.
@@ -171,6 +174,11 @@ fun SettingsScreen(
             item { SectionLabel(stringResource(R.string.settings_section_week)) }
             item {
                 SettingsCard {
+                    SwitchRow(
+                        title = stringResource(R.string.settings_goal_rings),
+                        subtitle = stringResource(R.string.settings_goal_rings_summary),
+                        checked = goalRings,
+                    ) { show -> scope.launch { dashboardPrefs.setGoalRings(show) } }
                     WeekStartRow(weekStyle.start) { day -> saveWeek { dashboardPrefs.setWeekStart(day) } }
                     // Listed in week order, so the rows match the rings from outer to inner.
                     (0L until 7L).map { weekStyle.start.plus(it) }.forEach { day ->
@@ -285,6 +293,25 @@ private fun SettingRow(icon: ImageVector, title: String, subtitle: String, onCli
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+    }
+}
+
+@Composable
+private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.size(16.dp))
+        // Null onCheckedChange: the whole row toggles, so TalkBack sees one control.
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 

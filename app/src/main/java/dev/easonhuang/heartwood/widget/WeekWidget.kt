@@ -50,9 +50,9 @@ class WeekWidget : GlanceAppWidget() {
         val app = context.applicationContext as HeartwoodApp
         val manager = app.healthConnect
         val granted = manager.isAvailable && manager.isGranted(Metric.STEPS)
-        // readDetail returns 14 daily totals ending today, enough for any week start.
+        // 7 daily totals ending today cover a week starting on any day.
         val daily = if (granted) {
-            runCatching { manager.readDetail(Metric.STEPS).points.map { it.value } }.getOrDefault(emptyList())
+            runCatching { manager.readDailySeries(Metric.STEPS, 7).map { it.value } }.getOrDefault(emptyList())
         } else emptyList()
         val style = app.dashboardPrefs.weekStyle.first()
         val week = weekSoFar(daily, style.start, LocalDate.now())
@@ -99,7 +99,8 @@ private fun WeekWidgetContent(granted: Boolean, days: List<Float>, colors: List<
         }
         // Text column only once there's room beside the rings (a 2x2 cell is ~110-180dp wide).
         val showText = size.width.value >= 200f
-        val ringDp = (size.height.value - 2f * pad).coerceAtMost(size.width.value - 2f * pad).coerceAtLeast(40f)
+        // Capped so a widget stretched to a full screen doesn't exceed RemoteViews' bitmap memory limit.
+        val ringDp = (size.height.value - 2f * pad).coerceAtMost(size.width.value - 2f * pad).coerceIn(40f, 240f)
         val density = context.resources.displayMetrics.density
         Image(
             provider = ImageProvider(weekRingsBitmap(days, goal, colors, (ringDp * density).toInt())),

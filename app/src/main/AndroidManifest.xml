@@ -111,7 +111,7 @@
                 android:resource="@xml/metric_widget_info" />
         </receiver>
 
-        <!-- Steps vs goal over the last week, as nested rings -->
+        <!-- This week's steps vs goal, as nested rings -->
         <receiver
             android:name=".widget.WeekWidgetReceiver"
             android:exported="true"

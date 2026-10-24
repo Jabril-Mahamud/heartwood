@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -29,9 +30,10 @@ class DashboardViewModel(
     // All summaries as read from Health Connect, in catalog order (null until first load).
     private val _summaries = MutableStateFlow<List<MetricSummary>?>(null)
 
-    // Goals are joined here rather than at read time so editing one updates the cards live.
-    private val withGoals = combine(_summaries, goalsRepo.goals) { all, goals ->
-        all?.map { it.copy(goal = goals[it.metric]) }
+    // Goals are joined here rather than at read time so editing one updates the cards live. With
+    // rings switched off no goal is attached, so the steps card falls back to its sparkline.
+    private val withGoals = combine(_summaries, goalsRepo.goals, prefs.goalRings) { all, goals, rings ->
+        all?.map { it.copy(goal = if (rings) goals[it.metric] else null) }
     }
 
     /**
@@ -85,17 +87,26 @@ class DashboardViewModel(
 class DetailViewModel(
     private val manager: HealthConnectManager,
     private val metric: Metric,
+    private val prefs: DashboardPreferences,
 ) : ViewModel() {
     private val _detail = MutableStateFlow<MetricDetail?>(null)
     val detail = _detail.asStateFlow()
 
     init {
-        viewModelScope.launch { _detail.value = manager.readDetail(metric) }
+        viewModelScope.launch {
+            val detail = manager.readDetail(metric)
+            _detail.value = if (metric == Metric.STEPS) detail.copy(stats = detail.stats + stepPeriodStats()) else detail
+        }
     }
 
+    // Uses the week rings' first day so "this week" here matches the Today card.
+    private suspend fun stepPeriodStats(): List<Pair<String, String>> = runCatching {
+        manager.readStepPeriodStats(prefs.weekStyle.first().start)
+    }.getOrDefault(emptyList())
+
     companion object {
-        fun factory(manager: HealthConnectManager, metric: Metric) = viewModelFactory {
-            initializer { DetailViewModel(manager, metric) }
+        fun factory(manager: HealthConnectManager, metric: Metric, prefs: DashboardPreferences) = viewModelFactory {
+            initializer { DetailViewModel(manager, metric, prefs) }
         }
     }
 }
