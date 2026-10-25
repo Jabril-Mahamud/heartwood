@@ -315,7 +315,7 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChang
     }
 }
 
-// ponytail: 12 hues 30° apart at the default rings' saturation/lightness, so the defaults are in
+// 12 hues 30° apart at the default rings' saturation/lightness, so the defaults are in
 // here too. Any of them reads on both themes; a free-form picker would need contrast checks.
 private val swatches = List(12) { Color.hsl(hue = it * 30f, saturation = 0.70f, lightness = 0.60f) }
 

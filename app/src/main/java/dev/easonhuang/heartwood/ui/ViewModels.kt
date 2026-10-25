@@ -52,7 +52,7 @@ class DashboardViewModel(
         withGoals.map { all -> all?.associateBy { it.metric } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** Week start and per-day colours for the week rings card. */
+    /** Week start and per-day colors for the week rings card. */
     val weekStyle: StateFlow<WeekStyle> =
         prefs.weekStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeekStyle.DEFAULT)
 

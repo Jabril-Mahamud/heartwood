@@ -154,8 +154,8 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // ponytail: outside the reorder/hide layout, so it's always first. Fold it into
-            // DashboardLayout if people want to move or hide it.
+            // Outside the reorder/hide layout, so it's always first; Settings can turn it off.
+            // Fold it into DashboardLayout if people want to move it.
             val steps = data.firstOrNull { it.metric == Metric.STEPS }
             val stepGoal = steps?.stepGoal()
             if (steps != null && stepGoal != null) {

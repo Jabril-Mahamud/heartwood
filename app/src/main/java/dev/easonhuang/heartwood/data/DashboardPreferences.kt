@@ -41,7 +41,7 @@ data class DashboardLayout(
 val defaultWeekdayColors = listOf(0f, 30f, 60f, 120f, 210f, 240f, 270f)
     .map { Color.hsl(hue = it, saturation = 0.70f, lightness = 0.60f) }
 
-/** How the Today week rings are drawn: the day the week starts on and each weekday's colour. */
+/** How the Today week rings are drawn: the day the week starts on and each weekday's color. */
 data class WeekStyle(val start: DayOfWeek, val colors: List<Color>) {
     fun color(day: DayOfWeek): Color = colors[day.value - 1]
 
@@ -106,7 +106,7 @@ class DashboardPreferences(private val context: Context) {
         context.dashboardDataStore.edit { prefs -> prefs[weekStartKey] = day.value }
     }
 
-    /** Sets [day]'s ring colour, or back to the default when [color] is null. */
+    /** Sets [day]'s ring color, or back to the default when [color] is null. */
     suspend fun setDayColor(day: DayOfWeek, color: Color?) {
         context.dashboardDataStore.edit { prefs ->
             if (color == null) prefs.remove(dayColorKey(day)) else prefs[dayColorKey(day)] = color.toArgb()
