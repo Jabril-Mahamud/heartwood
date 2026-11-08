@@ -8,7 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -317,7 +317,15 @@ private fun EditableCard(
                     MaterialTheme.shapes.extraLarge,
                 ),
         )
-        Row(Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Stacked down the edge: side by side, they'd cover the ring card's title.
+        Column(Modifier.align(Alignment.TopEnd).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilledTonalIconButton(onClick = onToggle, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    if (hidden) Icons.Rounded.Add else Icons.Rounded.Remove,
+                    contentDescription = toggleLabel,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
             if (ring != null) {
                 FilledTonalIconButton(onClick = onToggleRing, modifier = Modifier.size(32.dp)) {
                     Icon(
@@ -326,13 +334,6 @@ private fun EditableCard(
                         modifier = Modifier.size(18.dp),
                     )
                 }
-            }
-            FilledTonalIconButton(onClick = onToggle, modifier = Modifier.size(32.dp)) {
-                Icon(
-                    if (hidden) Icons.Rounded.Add else Icons.Rounded.Remove,
-                    contentDescription = toggleLabel,
-                    modifier = Modifier.size(18.dp),
-                )
             }
         }
     }
