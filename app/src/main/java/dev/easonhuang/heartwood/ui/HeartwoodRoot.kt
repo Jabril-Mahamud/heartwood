@@ -259,7 +259,6 @@ private fun MainNav(
                 } else {
                     DetailScreen(
                         manager = manager,
-                        dashboardPrefs = dashboardPrefs,
                         metric = metric,
                         onBack = { navController.popBackStack() },
                     )

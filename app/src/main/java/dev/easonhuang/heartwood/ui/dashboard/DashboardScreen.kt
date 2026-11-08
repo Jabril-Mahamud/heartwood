@@ -64,8 +64,6 @@ import dev.easonhuang.heartwood.data.MetricSummary
 import dev.easonhuang.heartwood.data.title
 import dev.easonhuang.heartwood.ui.DashboardViewModel
 import dev.easonhuang.heartwood.ui.components.MetricCard
-import dev.easonhuang.heartwood.ui.components.WeekGoalCard
-import dev.easonhuang.heartwood.ui.components.stepGoal
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyGridState
 
@@ -90,7 +88,6 @@ fun DashboardScreen(
     val allSummaries by vm.allSummaries.collectAsStateWithLifecycle()
     val layout by vm.layout.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
-    val weekStyle by vm.weekStyle.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val haptics = LocalHapticFeedback.current
 
@@ -154,15 +151,6 @@ fun DashboardScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Outside the reorder/hide layout, so it's always first; Settings can turn it off.
-            // Fold it into DashboardLayout if people want to move it.
-            val steps = data.firstOrNull { it.metric == Metric.STEPS }
-            val stepGoal = steps?.stepGoal()
-            if (steps != null && stepGoal != null) {
-                item(key = "week", span = { GridItemSpan(maxLineSpan) }) {
-                    WeekGoalCard(steps, stepGoal, weekStyle, onClick = { onOpenMetric(Metric.STEPS) })
-                }
-            }
             items(data, key = { it.metric.key }) { summary ->
                 MetricCard(
                     summary = summary,

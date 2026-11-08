@@ -5,13 +5,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -37,9 +32,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
@@ -56,21 +48,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.glance.appwidget.updateAll
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dev.easonhuang.heartwood.BuildConfig
 import dev.easonhuang.heartwood.R
@@ -79,11 +65,7 @@ import dev.easonhuang.heartwood.data.ExportFormat
 import dev.easonhuang.heartwood.data.ExportManager
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
-import dev.easonhuang.heartwood.data.WeekStyle
-import dev.easonhuang.heartwood.widget.WeekWidget
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
-import java.time.format.TextStyle
 
 private const val REPO_URL = "https://github.com/GuyOnWifi/heartwood"
 
@@ -102,17 +84,7 @@ fun SettingsScreen(
     val snackbar = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     var showFormatDialog by remember { mutableStateOf(false) }
-    val weekStyle by dashboardPrefs.weekStyle.collectAsStateWithLifecycle(WeekStyle.DEFAULT)
     val goalRings by dashboardPrefs.goalRings.collectAsStateWithLifecycle(true)
-    var pickingColorFor by remember { mutableStateOf<DayOfWeek?>(null) }
-
-    // The week widget only re-reads prefs when it renders, so nudge it after every change.
-    fun saveWeek(block: suspend () -> Unit) {
-        scope.launch {
-            block()
-            WeekWidget().updateAll(context)
-        }
-    }
 
     suspend fun runExport(uri: Uri, format: ExportFormat) {
         val granted = runCatching { manager.grantedPermissions() }.getOrDefault(emptySet())
@@ -179,11 +151,6 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_goal_rings_summary),
                         checked = goalRings,
                     ) { show -> scope.launch { dashboardPrefs.setGoalRings(show) } }
-                    WeekStartRow(weekStyle.start) { day -> saveWeek { dashboardPrefs.setWeekStart(day) } }
-                    // Listed in week order, so the rows match the rings from outer to inner.
-                    (0L until 7L).map { weekStyle.start.plus(it) }.forEach { day ->
-                        DayColorRow(day, weekStyle.color(day)) { pickingColorFor = day }
-                    }
                 }
             }
             item { SectionLabel(stringResource(R.string.settings_section_about)) }
@@ -216,18 +183,6 @@ fun SettingsScreen(
                 )
             }
         }
-    }
-
-    pickingColorFor?.let { day ->
-        DayColorDialog(
-            day = day,
-            current = weekStyle.color(day),
-            onPick = { color ->
-                pickingColorFor = null
-                saveWeek { dashboardPrefs.setDayColor(day, color) }
-            },
-            onDismiss = { pickingColorFor = null },
-        )
     }
 
     if (showFormatDialog) {
@@ -313,78 +268,4 @@ private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChang
         // Null onCheckedChange: the whole row toggles, so TalkBack sees one control.
         Switch(checked = checked, onCheckedChange = null)
     }
-}
-
-// 12 hues 30° apart at the default rings' saturation/lightness, so the defaults are in
-// here too. Any of them reads on both themes; a free-form picker would need contrast checks.
-private val swatches = List(12) { Color.hsl(hue = it * 30f, saturation = 0.70f, lightness = 0.60f) }
-
-@Composable
-private fun DayOfWeek.fullName() = getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun WeekStartRow(start: DayOfWeek, onChange: (DayOfWeek) -> Unit) {
-    val options = listOf(DayOfWeek.MONDAY, DayOfWeek.SUNDAY)
-    Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
-        Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-        Spacer(Modifier.size(10.dp))
-        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-            options.forEachIndexed { i, day ->
-                SegmentedButton(
-                    selected = start == day,
-                    onClick = { onChange(day) },
-                    shape = SegmentedButtonDefaults.itemShape(i, options.size),
-                ) { Text(day.fullName()) }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DayColorRow(day: DayOfWeek, color: Color, onClick: () -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClickLabel = stringResource(R.string.settings_day_color, day.fullName()), onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(24.dp).clip(CircleShape).background(color))
-        Spacer(Modifier.size(16.dp))
-        Text(day.fullName(), style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun DayColorDialog(day: DayOfWeek, current: Color, onPick: (Color?) -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.settings_day_color, day.fullName())) },
-        text = {
-            // 4 per row keeps 12 swatches an even grid at the 48dp touch-target size.
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                maxItemsInEachRow = 4,
-            ) {
-                swatches.forEachIndexed { i, swatch ->
-                    val selected = swatch.toArgb() == current.toArgb()
-                    val label = stringResource(R.string.settings_color_swatch, i + 1, swatches.size)
-                    Box(
-                        Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(swatch)
-                            .border(if (selected) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                            .selectable(selected = selected, role = Role.RadioButton) { onPick(swatch) }
-                            .semantics { contentDescription = label },
-                    )
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) } },
-        dismissButton = { TextButton(onClick = { onPick(null) }) { Text(stringResource(R.string.settings_color_reset)) } },
-    )
 }

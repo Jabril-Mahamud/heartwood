@@ -11,13 +11,11 @@ import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricDetail
 import dev.easonhuang.heartwood.data.MetricSummary
-import dev.easonhuang.heartwood.data.WeekStyle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -52,10 +50,6 @@ class DashboardViewModel(
         withGoals.map { all -> all?.associateBy { it.metric } }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    /** Week start and per-day colors for the week rings card. */
-    val weekStyle: StateFlow<WeekStyle> =
-        prefs.weekStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), WeekStyle.DEFAULT)
-
     /** The persisted card order and hidden set (null until DataStore's first read). */
     val layout: StateFlow<DashboardLayout?> =
         prefs.layout.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
@@ -87,7 +81,6 @@ class DashboardViewModel(
 class DetailViewModel(
     private val manager: HealthConnectManager,
     private val metric: Metric,
-    private val prefs: DashboardPreferences,
 ) : ViewModel() {
     private val _detail = MutableStateFlow<MetricDetail?>(null)
     val detail = _detail.asStateFlow()
@@ -99,14 +92,13 @@ class DetailViewModel(
         }
     }
 
-    // Uses the week rings' first day so "this week" here matches the Today card.
     private suspend fun stepPeriodStats(): List<Pair<String, String>> = runCatching {
-        manager.readStepPeriodStats(prefs.weekStyle.first().start)
+        manager.readStepPeriodStats()
     }.getOrDefault(emptyList())
 
     companion object {
-        fun factory(manager: HealthConnectManager, metric: Metric, prefs: DashboardPreferences) = viewModelFactory {
-            initializer { DetailViewModel(manager, metric, prefs) }
+        fun factory(manager: HealthConnectManager, metric: Metric) = viewModelFactory {
+            initializer { DetailViewModel(manager, metric) }
         }
     }
 }

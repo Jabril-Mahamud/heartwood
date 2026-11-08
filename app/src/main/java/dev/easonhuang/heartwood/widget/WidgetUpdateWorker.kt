@@ -21,7 +21,6 @@ class WidgetUpdateWorker(
                 MetricWidget.refreshData(applicationContext, id)
             }
             MetricWidget().updateAll(applicationContext)
-            WeekWidget().updateAll(applicationContext)
             Result.success()
         }.getOrElse { Result.retry() }
     }

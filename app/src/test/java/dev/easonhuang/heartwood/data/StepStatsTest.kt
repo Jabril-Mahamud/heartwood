@@ -2,7 +2,6 @@ package dev.easonhuang.heartwood.data
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.DayOfWeek
 import java.time.LocalDate
 
 class StepStatsTest {
@@ -36,17 +35,5 @@ class StepStatsTest {
         val today = LocalDate.of(2026, 11, 1)
         val daily = listOf(today.minusDays(1) to 5000f)
         assertEquals(PeriodTotals(0f, 0f), periodTotals(daily, today))
-    }
-
-    @Test
-    fun weekStartCanFallInLastYear() {
-        // Fri 1 Jan 2027: a Monday-start week began on 28 Dec 2026.
-        assertEquals(LocalDate.of(2026, 12, 28), weekStartOf(LocalDate.of(2027, 1, 1), DayOfWeek.MONDAY))
-    }
-
-    @Test
-    fun weekStartOnItsOwnStartDayIsToday() {
-        val sunday = LocalDate.of(2026, 10, 25)
-        assertEquals(sunday, weekStartOf(sunday, DayOfWeek.SUNDAY))
     }
 }

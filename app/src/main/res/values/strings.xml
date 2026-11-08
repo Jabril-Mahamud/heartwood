@@ -5,8 +5,6 @@
     <string name="widget_metric_name">Heartwood metric</string>
     <string name="widget_description">Glanceable health metrics from Health Connect.</string>
     <string name="metric_widget_description">A single health metric with a graph, pick which one.</string>
-    <string name="widget_week_name">Heartwood steps week</string>
-    <string name="week_widget_description">This week\'s steps against your goal, as rings.</string>
 
     <!-- Metric names -->
     <string name="metric_steps">Steps</string>
@@ -76,20 +74,10 @@
     <string name="dashboard_show">Show %1$s</string>
     <string name="dashboard_move_earlier">Move earlier</string>
     <string name="dashboard_move_later">Move later</string>
-    <!-- Under the "5/7" on the Today week rings -->
-    <string name="dashboard_week_goal_met">days goal met</string>
-    <!-- Week rings daily average so far, e.g. "avg 6,120/day" -->
-    <string name="dashboard_week_avg">avg %1$s/day</string>
     <!-- Settings: week rings -->
     <string name="settings_section_week">Week rings</string>
     <string name="settings_goal_rings">Show on Today</string>
     <string name="settings_goal_rings_summary">Step goal ring on the steps card and this week\'s rings above the grid</string>
-    <string name="settings_week_start">Week starts on</string>
-    <!-- %1$s is a weekday, e.g. "Monday color" -->
-    <string name="settings_day_color">%1$s color</string>
-    <!-- TalkBack label for a color swatch, e.g. "Color 3 of 12" -->
-    <string name="settings_color_swatch">Color %1$d of %2$d</string>
-    <string name="settings_color_reset">Reset</string>
     <string name="card_locked">Locked</string>
     <string name="card_tap_to_grant">Tap to grant access</string>
 

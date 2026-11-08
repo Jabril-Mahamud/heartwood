@@ -30,7 +30,6 @@ import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.request.AggregateGroupByPeriodRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
-import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
@@ -231,9 +230,10 @@ class HealthConnectManager(
      * Extra steps detail rows: week/month/year figures. Kept out of [readDetail] because it reads
      * back to 1 January, which the widgets have no use for.
      */
-    suspend fun readStepPeriodStats(firstDayOfWeek: DayOfWeek): List<Pair<String, String>> {
+    suspend fun readStepPeriodStats(): List<Pair<String, String>> {
         val today = LocalDate.now()
-        val weekStart = weekStartOf(today, firstDayOfWeek)
+        // "This week" is the last 7 days, the same window as the Summary's takeLast(7).
+        val weekStart = today.minusDays(6)
         // Early January, the week can start last year, so read back to whichever comes first.
         val from = minOf(weekStart, today.withDayOfYear(1))
         val daily = dailyTotalSeries(Metric.STEPS, ChronoUnit.DAYS.between(from, today).toInt() + 1)

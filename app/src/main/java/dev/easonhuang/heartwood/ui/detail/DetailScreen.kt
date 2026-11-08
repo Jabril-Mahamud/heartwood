@@ -39,7 +39,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.background
 import dev.easonhuang.heartwood.R
-import dev.easonhuang.heartwood.data.DashboardPreferences
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricDetail
@@ -55,13 +54,12 @@ import dev.easonhuang.heartwood.ui.components.LineChart
 @Composable
 fun DetailScreen(
     manager: HealthConnectManager,
-    dashboardPrefs: DashboardPreferences,
     metric: Metric,
     onBack: () -> Unit,
 ) {
     val vm: DetailViewModel = viewModel(
         key = metric.key,
-        factory = DetailViewModel.factory(manager, metric, dashboardPrefs),
+        factory = DetailViewModel.factory(manager, metric),
     )
     val detail by vm.detail.collectAsStateWithLifecycle()
 
