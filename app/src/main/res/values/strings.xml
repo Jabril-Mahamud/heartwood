@@ -113,11 +113,6 @@
     <string name="stat_month_total">This month, total</string>
     <string name="stat_year_avg">This year, daily avg</string>
     <string name="stat_year_total">This year, total</string>
-    <!-- Estimates from this week's steps; "≈" marks them as rough -->
-    <string name="stat_week_distance">This week ≈ distance</string>
-    <string name="stat_week_calories">This week ≈ energy</string>
-    <string name="stat_week_time">This week ≈ walking time</string>
-    <string name="duration_hours_minutes">%1$d h %2$d min</string>
     <string name="stat_average">Average</string>
     <string name="stat_min">Min</string>
     <string name="stat_max">Max</string>

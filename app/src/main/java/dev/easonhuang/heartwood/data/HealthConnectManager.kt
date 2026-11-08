@@ -41,7 +41,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.math.roundToInt
 import kotlin.reflect.KClass
 
 /**
@@ -229,9 +228,8 @@ class HealthConnectManager(
     }
 
     /**
-     * Extra steps detail rows: week/month/year figures and rough distance, energy and time
-     * equivalents. Kept out of [readDetail] because it reads back to 1 January, which the widgets
-     * have no use for.
+     * Extra steps detail rows: week/month/year figures. Kept out of [readDetail] because it reads
+     * back to 1 January, which the widgets have no use for.
      */
     suspend fun readStepPeriodStats(firstDayOfWeek: DayOfWeek): List<Pair<String, String>> {
         val today = LocalDate.now()
@@ -244,7 +242,6 @@ class HealthConnectManager(
         val week = periodTotals(daily, weekStart)
         val month = periodTotals(daily, today.withDayOfMonth(1))
         val year = periodTotals(daily, today.withDayOfYear(1))
-        val minutes = (week.total / STEPS_PER_MINUTE).roundToInt()
         fun steps(v: Float) = withUnit(Metric.STEPS.formatValue(v), Metric.STEPS)
         return listOf(
             str(R.string.stat_week_avg) to steps(week.average),
@@ -253,9 +250,6 @@ class HealthConnectManager(
             str(R.string.stat_month_total) to steps(month.total),
             str(R.string.stat_year_avg) to steps(year.average),
             str(R.string.stat_year_total) to steps(year.total),
-            str(R.string.stat_week_distance) to withUnit(Metric.DISTANCE.formatValue(week.total * STRIDE_METERS / 1000f), Metric.DISTANCE),
-            str(R.string.stat_week_calories) to withUnit(Metric.ACTIVE_CALORIES.formatValue(week.total * KCAL_PER_STEP), Metric.ACTIVE_CALORIES),
-            str(R.string.stat_week_time) to str(R.string.duration_hours_minutes, minutes / 60, minutes % 60),
         )
     }
 

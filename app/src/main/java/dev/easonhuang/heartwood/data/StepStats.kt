@@ -4,12 +4,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
-// Population averages, not this user. Stride from HEIGHT (≈ 0.415 × height) and kcal from WEIGHT
-// would be closer if those permissions are granted.
-const val STRIDE_METERS = 0.762f
-const val KCAL_PER_STEP = 0.04f
-const val STEPS_PER_MINUTE = 100f
-
 data class PeriodTotals(val average: Float, val total: Float)
 
 /**
