@@ -30,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import dev.easonhuang.heartwood.R
-import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricSummary
 import dev.easonhuang.heartwood.data.title
 import dev.easonhuang.heartwood.data.unit
@@ -56,9 +55,9 @@ fun MetricCard(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
-        val goal = summary.stepGoal()
+        val goal = summary.ringGoal()
         if (goal != null) {
-            StepsGoalBody(summary, goal)
+            GoalBody(summary, goal)
             return@Card
         }
         Column(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -106,9 +105,9 @@ fun MetricCard(
     }
 }
 
-/** The step goal when the steps card should draw its ring, else null (locked, no data, no goal). */
-fun MetricSummary.stepGoal(): Float? =
-    goal?.takeIf { metric == Metric.STEPS && granted && hasData && spark.isNotEmpty() && it > 0f }
+/** The goal when the card should draw its ring, else null (graph mode, locked, no data, no goal). */
+private fun MetricSummary.ringGoal(): Float? =
+    goal?.takeIf { granted && hasData && spark.isNotEmpty() && it > 0f }
 
 @Composable
 private fun MetricIcon(summary: MetricSummary, locked: Boolean) {
@@ -129,9 +128,9 @@ private fun MetricIcon(summary: MetricSummary, locked: Boolean) {
     }
 }
 
-/** Steps card with a goal: today's count sits inside a ring filled toward the goal. */
+/** Goal card in ring mode: today's total sits inside a ring filled toward the goal. */
 @Composable
-private fun StepsGoalBody(summary: MetricSummary, goal: Float) {
+private fun GoalBody(summary: MetricSummary, goal: Float) {
     Column(
         Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

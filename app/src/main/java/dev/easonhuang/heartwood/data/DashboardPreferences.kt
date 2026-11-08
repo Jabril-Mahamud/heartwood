@@ -1,7 +1,6 @@
 package dev.easonhuang.heartwood.data
 
 import android.content.Context
-import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
@@ -51,13 +50,18 @@ class DashboardPreferences(private val context: Context) {
         DashboardLayout(order, hidden)
     }
 
-    private val goalRingsKey = booleanPreferencesKey("goal_rings")
+    private val ringsKey = stringSetPreferencesKey("ring_cards")
 
-    /** Whether Today draws the step goal ring and week rings. Steps always has a goal, so this is the opt-out. */
-    val goalRings: Flow<Boolean> = context.dashboardDataStore.data.map { prefs -> prefs[goalRingsKey] ?: true }
+    /** Goal metrics whose Today card shows a goal ring instead of its sparkline. */
+    val rings: Flow<Set<Metric>> = context.dashboardDataStore.data.map { prefs ->
+        prefs[ringsKey].orEmpty().mapNotNull { Metric.fromKey(it) }.toSet()
+    }
 
-    suspend fun setGoalRings(show: Boolean) {
-        context.dashboardDataStore.edit { prefs -> prefs[goalRingsKey] = show }
+    suspend fun setRing(metric: Metric, ring: Boolean) {
+        context.dashboardDataStore.edit { prefs ->
+            val current = prefs[ringsKey].orEmpty()
+            prefs[ringsKey] = if (ring) current + metric.key else current - metric.key
+        }
     }
 
     suspend fun save(order: List<Metric>, hidden: Set<Metric>) {

@@ -28,10 +28,10 @@ class DashboardViewModel(
     // All summaries as read from Health Connect, in catalog order (null until first load).
     private val _summaries = MutableStateFlow<List<MetricSummary>?>(null)
 
-    // Goals are joined here rather than at read time so editing one updates the cards live. With
-    // rings switched off no goal is attached, so the steps card falls back to its sparkline.
-    private val withGoals = combine(_summaries, goalsRepo.goals, prefs.goalRings) { all, goals, rings ->
-        all?.map { it.copy(goal = if (rings) goals[it.metric] else null) }
+    // Goals are joined here rather than at read time so editing one updates the cards live. Only
+    // cards set to ring mode get a goal; the rest keep their sparkline.
+    private val withGoals = combine(_summaries, goalsRepo.goals, prefs.rings) { all, goals, rings ->
+        all?.map { it.copy(goal = if (it.metric in rings) goals[it.metric] else null) }
     }
 
     /**
@@ -54,8 +54,16 @@ class DashboardViewModel(
     val layout: StateFlow<DashboardLayout?> =
         prefs.layout.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** Goal metrics shown as a ring rather than a graph. */
+    val rings: StateFlow<Set<Metric>> =
+        prefs.rings.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptySet())
+
     fun saveLayout(order: List<Metric>, hidden: Set<Metric>) {
         viewModelScope.launch { prefs.save(order, hidden) }
+    }
+
+    fun setRing(metric: Metric, ring: Boolean) {
+        viewModelScope.launch { prefs.setRing(metric, ring) }
     }
 
     private val _refreshing = MutableStateFlow(false)

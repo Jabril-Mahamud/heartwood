@@ -4,7 +4,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
@@ -34,7 +32,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
@@ -53,14 +50,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.background
 import dev.easonhuang.heartwood.BuildConfig
 import dev.easonhuang.heartwood.R
-import dev.easonhuang.heartwood.data.DashboardPreferences
 import dev.easonhuang.heartwood.data.ExportFormat
 import dev.easonhuang.heartwood.data.ExportManager
 import dev.easonhuang.heartwood.data.HealthConnectManager
@@ -74,7 +69,6 @@ private const val REPO_URL = "https://github.com/GuyOnWifi/heartwood"
 fun SettingsScreen(
     manager: HealthConnectManager,
     exporter: ExportManager,
-    dashboardPrefs: DashboardPreferences,
     bottomInset: Dp,
     onManagePermissions: () -> Unit,
 ) {
@@ -84,7 +78,6 @@ fun SettingsScreen(
     val snackbar = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     var showFormatDialog by remember { mutableStateOf(false) }
-    val goalRings by dashboardPrefs.goalRings.collectAsStateWithLifecycle(true)
 
     suspend fun runExport(uri: Uri, format: ExportFormat) {
         val granted = runCatching { manager.grantedPermissions() }.getOrDefault(emptySet())
@@ -141,16 +134,6 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.settings_export_summary),
                         onClick = { showFormatDialog = true },
                     )
-                }
-            }
-            item { SectionLabel(stringResource(R.string.settings_section_week)) }
-            item {
-                SettingsCard {
-                    SwitchRow(
-                        title = stringResource(R.string.settings_goal_rings),
-                        subtitle = stringResource(R.string.settings_goal_rings_summary),
-                        checked = goalRings,
-                    ) { show -> scope.launch { dashboardPrefs.setGoalRings(show) } }
                 }
             }
             item { SectionLabel(stringResource(R.string.settings_section_about)) }
@@ -248,24 +231,5 @@ private fun SettingRow(icon: ImageVector, title: String, subtitle: String, onCli
             Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-    }
-}
-
-@Composable
-private fun SwitchRow(title: String, subtitle: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
-            Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        Spacer(Modifier.size(16.dp))
-        // Null onCheckedChange: the whole row toggles, so TalkBack sees one control.
-        Switch(checked = checked, onCheckedChange = null)
     }
 }

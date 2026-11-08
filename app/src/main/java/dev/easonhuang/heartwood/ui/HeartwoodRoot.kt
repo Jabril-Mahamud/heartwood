@@ -247,7 +247,6 @@ private fun MainNav(
                 SettingsScreen(
                     manager = manager,
                     exporter = exporter,
-                    dashboardPrefs = dashboardPrefs,
                     bottomInset = bottomInset,
                     onManagePermissions = onManagePermissions,
                 )

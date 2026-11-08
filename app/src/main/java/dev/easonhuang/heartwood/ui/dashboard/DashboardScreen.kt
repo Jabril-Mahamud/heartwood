@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,8 +19,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ShowChart
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.DonutLarge
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Tune
@@ -57,6 +60,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.easonhuang.heartwood.R
 import dev.easonhuang.heartwood.data.DashboardLayout
 import dev.easonhuang.heartwood.data.DashboardPreferences
+import dev.easonhuang.heartwood.data.GoalCatalog
 import dev.easonhuang.heartwood.data.GoalsRepository
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
@@ -88,6 +92,7 @@ fun DashboardScreen(
     val allSummaries by vm.allSummaries.collectAsStateWithLifecycle()
     val layout by vm.layout.collectAsStateWithLifecycle()
     val refreshing by vm.refreshing.collectAsStateWithLifecycle()
+    val rings by vm.rings.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     val haptics = LocalHapticFeedback.current
 
@@ -136,7 +141,7 @@ fun DashboardScreen(
             val all = allSummaries
             val stored = layout
             if (all != null && stored != null) {
-                EditGrid(all, stored, contentPadding, onSave = vm::saveLayout)
+                EditGrid(all, stored, rings, contentPadding, onSave = vm::saveLayout, onSetRing = vm::setRing)
             }
             return@Scaffold
         }
@@ -168,8 +173,10 @@ fun DashboardScreen(
 private fun EditGrid(
     all: Map<Metric, MetricSummary>,
     stored: DashboardLayout,
+    rings: Set<Metric>,
     contentPadding: PaddingValues,
     onSave: (order: List<Metric>, hidden: Set<Metric>) -> Unit,
+    onSetRing: (Metric, Boolean) -> Unit,
 ) {
     // Local working copy, seeded once when edit mode opens. Edits write straight through to
     // DataStore but we never re-seed from its echo, so a drag in progress can't be clobbered.
@@ -232,6 +239,9 @@ private fun EditGrid(
                     onToggle = { hide(metric) },
                     onMoveEarlier = { move(metric, -1) },
                     onMoveLater = { move(metric, 1) },
+                    // Only metrics with a goal can fill a ring.
+                    ring = if (metric in GoalCatalog.metrics) metric in rings else null,
+                    onToggleRing = { onSetRing(metric, metric !in rings) },
                     modifier = Modifier
                         .graphicsLayer { scaleX = scale; scaleY = scale }
                         .shadow(elevation, MaterialTheme.shapes.extraLarge)
@@ -265,7 +275,8 @@ private fun EditGrid(
 /**
  * A dashboard card in edit mode: the real tile with its live data, outlined, plus a corner button
  * that hides it (−) or, for a [hidden] card, shows it again (+). Hidden cards are dimmed but keep
- * their data, so they still work as an at-a-glance indicator. TalkBack gets the same actions.
+ * their data, so they still work as an at-a-glance indicator. A goal metric ([ring] non-null) also
+ * gets a button to switch between its graph and a goal ring. TalkBack gets the same actions.
  */
 @Composable
 private fun EditableCard(
@@ -275,11 +286,14 @@ private fun EditableCard(
     modifier: Modifier = Modifier,
     onMoveEarlier: (() -> Unit)? = null,
     onMoveLater: (() -> Unit)? = null,
+    ring: Boolean? = null,
+    onToggleRing: () -> Unit = {},
 ) {
     val title = summary.metric.title
     val toggleLabel = stringResource(if (hidden) R.string.dashboard_show else R.string.dashboard_hide, title)
     val earlierLabel = stringResource(R.string.dashboard_move_earlier)
     val laterLabel = stringResource(R.string.dashboard_move_later)
+    val ringLabel = ring?.let { stringResource(if (it) R.string.dashboard_show_graph else R.string.dashboard_show_ring, title) }
     Box(
         modifier
             .fillMaxWidth()
@@ -287,6 +301,7 @@ private fun EditableCard(
                 customActions = listOfNotNull(
                     onMoveEarlier?.let { CustomAccessibilityAction(earlierLabel) { it(); true } },
                     onMoveLater?.let { CustomAccessibilityAction(laterLabel) { it(); true } },
+                    ringLabel?.let { CustomAccessibilityAction(it) { onToggleRing(); true } },
                     CustomAccessibilityAction(toggleLabel) { onToggle(); true },
                 )
             },
@@ -302,15 +317,23 @@ private fun EditableCard(
                     MaterialTheme.shapes.extraLarge,
                 ),
         )
-        FilledTonalIconButton(
-            onClick = onToggle,
-            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(32.dp),
-        ) {
-            Icon(
-                if (hidden) Icons.Rounded.Add else Icons.Rounded.Remove,
-                contentDescription = toggleLabel,
-                modifier = Modifier.size(18.dp),
-            )
+        Row(Modifier.align(Alignment.TopEnd).padding(8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (ring != null) {
+                FilledTonalIconButton(onClick = onToggleRing, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        if (ring) Icons.AutoMirrored.Rounded.ShowChart else Icons.Rounded.DonutLarge,
+                        contentDescription = ringLabel,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            FilledTonalIconButton(onClick = onToggle, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    if (hidden) Icons.Rounded.Add else Icons.Rounded.Remove,
+                    contentDescription = toggleLabel,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
         }
     }
 }
