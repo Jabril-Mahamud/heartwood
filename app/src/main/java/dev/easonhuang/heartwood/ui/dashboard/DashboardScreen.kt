@@ -62,6 +62,7 @@ import dev.easonhuang.heartwood.data.DashboardLayout
 import dev.easonhuang.heartwood.data.DashboardPreferences
 import dev.easonhuang.heartwood.data.GoalCatalog
 import dev.easonhuang.heartwood.data.GoalsRepository
+import dev.easonhuang.heartwood.data.UnitPreferences
 import dev.easonhuang.heartwood.data.HealthConnectManager
 import dev.easonhuang.heartwood.data.Metric
 import dev.easonhuang.heartwood.data.MetricSummary
@@ -82,12 +83,13 @@ import sh.calvin.reorderable.rememberReorderableLazyGridState
 fun DashboardScreen(
     manager: HealthConnectManager,
     dashboardPrefs: DashboardPreferences,
+    units: UnitPreferences,
     goalsRepo: GoalsRepository,
     bottomInset: androidx.compose.ui.unit.Dp,
     onOpenMetric: (Metric) -> Unit,
     onManagePermissions: () -> Unit,
 ) {
-    val vm: DashboardViewModel = viewModel(factory = DashboardViewModel.factory(manager, dashboardPrefs, goalsRepo))
+    val vm: DashboardViewModel = viewModel(factory = DashboardViewModel.factory(manager, dashboardPrefs, units, goalsRepo))
     val summaries by vm.summaries.collectAsStateWithLifecycle()
     val allSummaries by vm.allSummaries.collectAsStateWithLifecycle()
     val layout by vm.layout.collectAsStateWithLifecycle()

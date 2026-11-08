@@ -84,7 +84,7 @@ fun MetricCard(
                 if (!locked && summary.hasData) {
                     Spacer(Modifier.size(4.dp))
                     Text(
-                        text = summary.metric.unit,
+                        text = summary.metric.unit(summary.system),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 4.dp),
@@ -165,7 +165,7 @@ private fun GoalBody(summary: MetricSummary, goal: Float) {
                     modifier = Modifier.padding(horizontal = 10.dp),
                 )
                 Text(
-                    text = summary.metric.unit,
+                    text = summary.metric.unit(summary.system),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

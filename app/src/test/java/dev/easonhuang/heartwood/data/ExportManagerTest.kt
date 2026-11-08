@@ -13,7 +13,7 @@ import java.time.Instant
 class ExportManagerTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private val exporter = ExportManager(context, HealthConnectManager(context, FakeHealthConnectClient()))
+    private val exporter = ExportManager(context, HealthConnectManager(context, FakeHealthConnectClient()), UnitPreferences(context))
 
     private val t1 = Instant.parse("2024-03-01T00:00:00Z")
     private val t2 = Instant.parse("2024-03-02T08:30:00Z")
@@ -29,10 +29,10 @@ class ExportManagerTest {
 
         assertEquals(
             """
-            metric,title,unit,timestamp,value
-            steps,Steps,steps,2024-03-01T00:00:00Z,1200.0
-            steps,Steps,steps,2024-03-02T08:30:00Z,845.0
-            weight,Weight,kg,2024-03-02T08:30:00Z,70.5
+            metric,title,unit,timestamp,value,diastolic
+            steps,Steps,steps,2024-03-01T00:00:00Z,1200.0,
+            steps,Steps,steps,2024-03-02T08:30:00Z,845.0,
+            weight,Weight,kg,2024-03-02T08:30:00Z,70.5,
 
             """.trimIndent(),
             out,
@@ -43,7 +43,30 @@ class ExportManagerTest {
     fun csvWithNoPointsIsJustTheHeader() {
         val out = StringBuilder().also { exporter.writeCsv(it, listOf(Metric.STEPS to emptyList())) }
 
-        assertEquals("metric,title,unit,timestamp,value\n", out.toString())
+        assertEquals("metric,title,unit,timestamp,value,diastolic\n", out.toString())
+    }
+
+    @Test
+    fun bloodPressureCarriesDiastolicAsSecondValue() {
+        val bp = listOf(Metric.BLOOD_PRESSURE to listOf(SeriesPoint(t1, 120f, "Fri", value2 = 80f)))
+
+        val csv = StringBuilder().also { exporter.writeCsv(it, bp) }.toString()
+        assertEquals(
+            """
+            metric,title,unit,timestamp,value,diastolic
+            blood_pressure,Blood pressure,mmHg,2024-03-01T00:00:00Z,120.0,80.0
+
+            """.trimIndent(),
+            csv,
+        )
+
+        val json = StringBuilder().also { exporter.writeJson(it, bp) }.toString()
+        assertEquals(
+            """{"app":"Heartwood","metrics":[""" +
+                """{"key":"blood_pressure","title":"Blood pressure","unit":"mmHg","points":[""" +
+                """{"t":"2024-03-01T00:00:00Z","sys":120.0,"dia":80.0}]}]}""",
+            json,
+        )
     }
 
     @Test
@@ -67,6 +90,15 @@ class ExportManagerTest {
                 """{"key":"height","title":"Height","unit":"cm","points":[]}]}""",
             out,
         )
+    }
+
+    @Test
+    fun imperialExportLabelsConvertedUnits() {
+        val out = StringBuilder().also {
+            exporter.writeCsv(it, listOf(Metric.WEIGHT to listOf(SeriesPoint(t2, 155.4f, "Mar 2"))), UnitSystem.IMPERIAL)
+        }.toString()
+
+        assertEquals("metric,title,unit,timestamp,value,diastolic\nweight,Weight,lb,2024-03-02T08:30:00Z,155.4,\n", out)
     }
 
     @Test
